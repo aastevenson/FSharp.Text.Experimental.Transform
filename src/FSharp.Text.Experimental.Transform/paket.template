@@ -1,0 +1,23 @@
+type project
+owners
+    Andrew Stevenson
+authors 
+    Andrew Stevenson
+projectUrl
+    http://github.com/aastevenson/FSharp.Text.Experimental.Transform
+iconUrl
+    https://raw.githubusercontent.com/aastevenson/FSharp.Text.Experimental.Transform/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/aastevenson/FSharp.Text.Experimental.Transform/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    text transformation fsharp typeprovider parsing
+summary
+    A library used to parse and transform structured text
+description
+    This library is intended to be used to transform structured text files, and in particular text files containing program source code. An F# type provider is used to provide strongly typed access to context-free grammar nonterminals.
+
+

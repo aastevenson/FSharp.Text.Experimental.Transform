@@ -1,0 +1,15 @@
+var i;
+i := 1;
+var upper1;
+upper1 := (9) + 1;
+while i - upper1 do
+    var j;
+    j := 1;
+    var upper2;
+    upper2 := (10) + 1;
+    while j - upper2 do
+        write i * j;
+        j := j + 1;
+    end
+    i := i + 1;
+end

@@ -1,0 +1,34 @@
+var d;
+d := 17;
+var r;
+r := 5;
+var y;
+read y;
+var z;
+read z;
+while y != 0 do
+    var x;
+    x := y + z;
+    var a;
+    a := 3;
+    var j;
+    j := 1;
+    var b;
+    while j != 100 do
+        var k;
+        k := a + z;
+        b := j * z;
+        d := (y + z) * d;
+        var e;
+        e := (x + z) * r;
+        j := j + 1;
+    end
+    var c;
+    c := a + y;
+    var m;
+    m := y * b;
+    var n;
+    n := r * y;
+    write n;
+    y := y - 1;
+end
