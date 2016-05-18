@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Limitations
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A library used to parse and transform structured text"/>
+    <meta name="author" content="Andrew Stevenson"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FSharp.Text.Experimental.Transform/content/style.css" />
+    <script type="text/javascript" src="/FSharp.Text.Experimental.Transform/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FSharp.Text.Experimental.Transform/index.html">FSharp.Text.Experimental.Transform</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="Limitations" class="anchor" href="#Limitations">Limitations</a></h1>
+<p>The FSharp.Text.Experimental.Transform library contains several limitations. The sections below
+describes these limitations, the reasons they exist, and possible workarounds.</p>
+<ol>
+<li><a href="#Grammar-disjunction-is-limited-to-7-alternatives">Grammar disjunction is limited to 7 alternatives</a></li>
+<li><a href="#Parsing-whitespace-sensitive-languages-is-not-supported">Parsing whitespace-sensitive languages is not supported</a></li>
+<li><a href="#Left-recursive-grammar-productions-are-not-supported">Left recursive grammar productions are not supported</a></li>
+</ol>
+<h2><a name="Grammar-disjunction-is-limited-to-7-alternatives" class="anchor" href="#Grammar-disjunction-is-limited-to-7-alternatives">Grammar disjunction is limited to 7 alternatives</a></h2>
+<p>Grammar disjunction refers to grammar clauses separated by <code>|</code>, and in this library are limited to
+7 or less alternatives. An example of a grammar production with more than 7 alternatives is:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Statement   :   DeclarationStatement
+            |   AssignStatement
+            |   ReadStatement
+            |   PrintStatement
+            |   FunctionDefinition
+            |   IfStatement
+            |   WhileStatement
+            |   ForStatement;
+</code></pre></td></tr></table>
+<p><strong>Reason:</strong> Grammar disjunction is represented in the provided object model as the built-in
+FSharp.Core.Choice family of types, which take at most 7 generic type parameters. The .NET
+runtime supports an arbitrary number of type parameters, so hopefully this limit can be
+raised in the future.</p>
+<p><strong>Workaround:</strong> If a disjunctive clause has more than 7 alternatives, they can be broken up into
+smaller clauses with 7 or less alternatives each. This can be done by identifying a subset of
+alternatives with a common characteristic and grouping them into a separate disjunctive clause.
+For example, the production above can be broken up by grouping statements that control the flow
+of execution:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Statement               :   DeclarationStatement
+                        |   AssignStatement
+                        |   ReadStatement
+                        |   PrintStatement
+                        |   FunctionDefinition
+                        |   ControlFlowStatement;
+
+ControlFlowStatement    :   IfStatement
+                        |   WhileStatement
+                        |   ForStatement;
+</code></pre></td></tr></table>
+<h2><a name="Parsing-whitespace-sensitive-languages-is-not-supported" class="anchor" href="#Parsing-whitespace-sensitive-languages-is-not-supported">Parsing whitespace-sensitive languages is not supported</a></h2>
+<p>The lexer in this library automatically discards all whitespace while tokenizing the input string,
+making it impossible to parse languages that depend on significant whitespace or "offside lines"
+such as F# or Python.</p>
+<p><strong>Reason:</strong> Simplicity. There is no external reason for this limitation, but such a lexer is more
+complex because it needs to emit indent and dedent tokens, keep track of indentation level with a
+stack, etc. Support for this feature is planned for a future version.</p>
+<p><strong>Workaround:</strong> None.</p>
+<h2><a name="Left-recursive-grammar-productions-are-not-supported" class="anchor" href="#Left-recursive-grammar-productions-are-not-supported">Left recursive grammar productions are not supported</a></h2>
+<p>Recursion in grammar productions occur when nonterminals are defined in terms of themselves, similar to
+how function recursion occurs when functions are defined in terms of themselves. Left recursion refers
+to the case where the self-reference occurs at the leftmost end of the nonterminal definition.
+<em>Direct</em> left recursion occurs in a grammar when a nonterminal definition starts with that nonterminal itself,
+for example:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Expression  :   Expression Op Expression;
+</code></pre></td></tr></table>
+<p><em>Indirect</em> left recursion occurs when two or more nonterminal definitions reference each other first in a cycle:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Statement   :   ... | Expression ';';
+Expression  :   ... | Statement | ... ;
+</code></pre></td></tr></table>
+<p>Note that left recursion also occurs whenever the self-referenced nonterminal is preceded by clauses
+that can derive the empty string (including <code>*</code> or <code>?</code> clauses). For example:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Expression  :   Modifier? Expression Op Expression;     % disallowed
+
+Expression  :   Modifier* Expression Op Expression;     % disallowed
+
+Expression  :   Modifier+ Expression Op Expression;     % allowed
+Modifier    :   'const';
+
+Expression  :   Modifier+ Expression Op Expression;     % disallowed
+Modifier    :   'const'? ;
+</code></pre></td></tr></table>
+<p><strong>Reason:</strong> A top-down parser is used in this library, and left-recursion is a problem inherent in any
+top-down parser. When the parser tries to parse with a left recursive goal it will recurse infintely
+without consuming any input. It is possible to automatically refactor the grammar to eliminate
+left-recursion but this has the side-effect of altering the parse tree (and therefore the object model through
+which the library user navigates her parse tree). The object model must correspond to the grammar as written
+for a suitable user experience. Automatic tree rewriting to restore the original parse tree is a possible
+resolution, and is planned for a future version.</p>
+<p><strong>Workaround:</strong> There are many online articles describing how to
+<a href="https://www.google.ca/search?q=eliminate+left+recursion">eliminate left recursion</a> in your grammar. As a basic
+example:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Expression  :   Primary | Expression Op Expression;     % with left recursion
+
+Expression  :   Primary (Op Expression)?;               % without left recursion 
+</code></pre></td></tr></table>
+
+
+        </div>
+        <div class="span3">
+          <img src="/FSharp.Text.Experimental.Transform/img/logo.png" alt="F# Project" style="width:150px;margin:10px" />  
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FSharp.Text.Experimental.Transform</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://nuget.org/packages/FSharp.Text.Experimental.Transform">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform">Source Code on GitHub</a></li>
+            <li><a href="/FSharp.Text.Experimental.Transform/license.html">License</a></li>
+            <li><a href="/FSharp.Text.Experimental.Transform/release-notes.html">Release Notes</a></li>
+            
+            <li class="nav-header">Getting started</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/tutorial.html">Sample tutorial</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>

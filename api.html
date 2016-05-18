@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>API Reference
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A library used to parse and transform structured text"/>
+    <meta name="author" content="Andrew Stevenson"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FSharp.Text.Experimental.Transform/content/style.css" />
+    <script type="text/javascript" src="/FSharp.Text.Experimental.Transform/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FSharp.Text.Experimental.Transform/index.html">FSharp.Text.Experimental.Transform</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="API-Reference" class="anchor" href="#API-Reference">API Reference</a></h1>
+<p>This API reference is slightly different from a traditional API reference because
+the methods signatures described within will change based on the grammar passed to the GrammarProvider
+type provider. The entry point to everything in this library is this type provider,
+which can be instantiated in the typical way:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="t">L</span> <span class="o">=</span> <span class="i">GrammarProvider</span><span class="o">&lt;</span><span class="i">grammar</span><span class="o">&gt;</span>
+</code></pre></td>
+</tr>
+</table>
+<p>Type <code>L</code>, referred to here as the <em>root type</em>, contains nested types that correspond to each
+nonterminal and token class in the grammar. For instance, the <a href="index.html">Hello World Example</a>
+grammar will produce nested types <code>L.Program</code> and <code>L.Greeting</code>. These are called <em>nonterminal types</em>
+in this reference. Grammars that contain references to token classes such as 'Id' or 'Stringlit'
+will result in the nested types <code>L.Id</code> and <code>L.Stringlit</code>, called <em>token class types</em>. The three sections
+below describe the methods for <a href="#Root-type-methods">root types</a>, <a href="#Nonterminal-type-methods">nonterminal types</a>,
+and <a href="#Token-class-type-methods">token class types</a> respectively.</p>
+<h2><a name="Root-type-methods" class="anchor" href="#Root-type-methods">Root type methods</a></h2>
+<ul>
+<li>
+<pre>static ParseFile(<em>filePath</em>) : Program</pre>
+Parses the contents of a text file into a parse tree.
+<ul>
+<li>Parameter <em>filePath</em> (string): The path of the input file to parse.</li>
+<li>Returns <code>L.Program</code>: The root of the parse tree.</li>
+</ul>
+</li>
+<li>
+<pre>static ParseString(<em>input</em>) : Program</pre>
+Parses the contents of a string into a parse tree.
+<ul>
+<li>Parameter <em>input</em> (string): The input string to parse.</li>
+<li>Returns <code>L.Program</code>: The root of the parse tree.</li>
+</ul>
+</li>
+<li>
+<pre>static Pretty(<em>parseTree</em>) : string</pre>
+Converts a parse tree into a prettily-formatted string, determined by
+<a href="#grammarsyntax#Formatting-cues">formatting cues</a> in the grammar. An overload for this
+method exists for every nonterminal type in the grammar.
+<ul>
+<li>Parameter <em>parseTree</em> (<em>Nonterminal Type</em>): The parse tree to convert.</li>
+<li>Returns string: The prettily-formatted output.</li>
+</ul>
+</li>
+</ul>
+<h2><a name="Nonterminal-type-methods" class="anchor" href="#Nonterminal-type-methods">Nonterminal type methods</a></h2>
+<p>The method signatures below include references to two placeholder types: <em>T</em> and <em>U</em>.
+The placeholder type <em>T</em> refers to the nonterminal type of this class (for static methods)
+or the type of this object (for instance methods). The placeholder type <em>U</em> refers to some other
+nonterminal or token class type reachable from <em>T</em>. Overloaded methods are grouped below by name:</p>
+<ul>
+<li><a href="#ApplyOnePass">ApplyOnePass</a>: Traverse a parse tree once, applying a transformation function</li>
+<li>
+<a href="#ApplyRecursively">ApplyRecursively</a>: Traverse a parse tree repeatedly, applying a 
+transformation function until no more replacements are possible.
+</li>
+<li><a href="#Construct">Construct</a>: Construct a new parse tree based on some pattern.</li>
+<li><a href="#Contains">Contains</a>: Determines if one tree is contained in another.</li>
+<li><a href="#FindAll">FindAll</a>: Find all subtrees of some type.</li>
+<li><a href="#FindAllMatching">FindAllMatching</a>: Find all subtrees matching some pattern.</li>
+<li><a href="#TryFind">TryFind</a>: Tries to find a subtree matching some pattern.</li>
+<li><a href="#TryMatch">TryMatch</a>: Tries to match the current tree with some pattern.</li>
+</ul>
+<h3><a name="ApplyOnePass" class="anchor" href="#ApplyOnePass">ApplyOnePass</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.ApplyOnePass(<em>transformer</em>) : <em>T</em></pre>
+Performs one pass over the parse tree of type <em>T</em>, applying the given transformation
+function to subtrees of type <em>U</em>. Further transformations are not applied to subtree
+replacements, so this operation is guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> <tt>-&gt;</tt> <em>U</em> ): The transformation function to apply.</li>
+<li><p>Returns <em>T</em>: The transformed parse tree.</p></li>
+</ul>
+</li>
+<li>
+<pre><em>T</em>.ApplyOnePass(<em>transformer</em>) : <em>T</em></pre>
+Performs one pass over the parse tree of type <em>T</em>, applying the given transformation
+function to subtrees of type <em>U</em> list. Further transformations are not applied to subtree
+replacements, so this operation is guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> list <tt>-&gt;</tt> <em>U</em> list): The transformation function to apply.</li>
+<li><p>Returns <em>T</em>: The transformed parse tree.</p></li>
+</ul>
+</li>
+<li>
+<pre>static ApplyOnePass(<em>transformer</em>) : <em>T</em> -&gt; <em>T</em></pre>
+Performs one pass over the parse tree of type <em>T</em>, applying the given transformation
+function to subtrees of type <em>U</em>. Further transformations are not applied to subtree
+replacements, so this operation is guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> <tt>-&gt;</tt> <em>U</em> ): The transformation function to apply.</li>
+<li>
+<p>Returns <em>T</em> <tt>-&gt;</tt> <em>T</em>: A function that takes a tree and returns its transformed
+tree. Useful when combined with the <code>|&gt;</code> operator.</p>
+</li>
+</ul>
+</li>
+<li>
+<pre>static ApplyOnePass(<em>transformer</em>) : <em>T</em> -&gt; <em>T</em></pre>
+Performs one pass over the parse tree of type <em>T</em>, applying the given transformation
+function to subtrees of type <em>U</em> list. Further transformations are not applied to subtree
+replacements, so this operation is guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> list <tt>-&gt;</tt> <em>U</em> list): The transformation function to apply.</li>
+<li>
+Returns <em>T</em> <tt>-&gt;</tt> <em>T</em>: A function that takes a tree and returns its transformed 
+tree. Useful when combined with the <code>|&gt;</code> operator.
+</li>
+</ul>
+</li>
+</ul>
+<h3><a name="ApplyRecursively" class="anchor" href="#ApplyRecursively">ApplyRecursively</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.ApplyRecursively(<em>transformer</em>) : <em>T</em></pre>
+Performs repeated passes over the parse tree of type <em>T</em>, applying the <em>transformer</em>
+function to subtrees of type <em>U</em>. <em>transformer</em> is recursively applied to subtree
+replacements, so this operation is not guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> <tt>-&gt;</tt> <em>U</em> ): The transformation function to apply.</li>
+<li><p>Returns <em>T</em>: The transformed parse tree.</p></li>
+</ul>
+</li>
+<li>
+<pre><em>T</em>.ApplyRecursively(<em>transformer</em>) : <em>T</em></pre>
+Performs repeated passes over the parse tree of type <em>T</em>, applying the <em>transformer</em>
+function to subtrees of type <em>U</em> list. <em>transformer</em> is recursively applied to subtree
+replacements, so this operation is not guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> list <tt>-&gt;</tt> <em>U</em> list): The transformation function to apply.</li>
+<li><p>Returns <em>T</em>: The transformed parse tree.</p></li>
+</ul>
+</li>
+<li>
+<pre>static ApplyRecursively(<em>transformer</em>) : <em>T</em> -&gt; <em>T</em></pre>
+Performs repeated passes over the parse tree of type <em>T</em>, applying the <em>transformer</em>
+function to subtrees of type <em>U</em>. <em>transformer</em> is recursively applied to subtree
+replacements, so this operation is not guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> <tt>-&gt;</tt> <em>U</em> ): The transformation function to apply.</li>
+<li>
+<p>Returns <em>T</em> <tt>-&gt;</tt> <em>T</em>: A function that takes a tree and returns its transformed
+tree. Useful when combined with the <code>|&gt;</code> operator.</p>
+</li>
+</ul>
+</li>
+<li>
+<pre>static ApplyRecursively(<em>transformer</em>) : <em>T</em> -&gt; <em>T</em></pre>
+Performs repeated passes over the parse tree of type <em>T</em>, applying the <em>transformer</em>
+function to subtrees of type <em>U</em> list. <em>transformer</em> is recursively applied to subtree
+replacements, so this operation is not guaranteed to finish.
+<ul>
+<li>Parameter <em>transformer</em> ( <em>U</em> list <tt>-&gt;</tt> <em>U</em> list): The transformation function to apply.</li>
+<li>
+Returns <em>T</em> <tt>-&gt;</tt> <em>T</em>: A function that takes a tree and returns its transformed 
+tree. Useful when combined with the <code>|&gt;</code> operator.
+</li>
+</ul>
+</li>
+</ul>
+<h3><a name="Construct" class="anchor" href="#Construct">Construct</a></h3>
+<ul>
+<li>
+<pre>static Construct< <em>replacement</em> &gt;(<em>arg1</em>, <em>arg2</em>, ...) : <em>T</em></pre>
+Constructs a new parse tree of type <em>T</em> of the form <em>replacement</em>. The method argument values are used
+to fill holes in the <em>replacement</em>. See <a href="patterns.html">patterns, holes, and binding types</a> for more information.
+<ul>
+<li>Static parameter <em>replacement</em> (string): A replacement pattern of form <em>T</em>.</li>
+<li>Parameter <em>arg1</em>: A value of the type corresponding to the first hole in <em>replacement</em>.</li>
+<li>Parameter <em>arg2</em>: A value of the type corresponding to the second hole in <em>replacement</em>.</li>
+<li>
+Returns <em>T</em>: A parse tree of type <em>T</em> corresponding to the form of <em>replacement</em> with argument values
+applied to fill in the pattern holes.
+</li>
+</ul>
+</li>
+</ul>
+<h3><a name="Contains" class="anchor" href="#Contains">Contains</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.Contains(<em>subtree</em>) : bool</pre>
+Tests whether this tree contains the given tree or not.
+<ul>
+<li>Parameter <em>subtree</em> ( <em>U</em> ): The parse tree to test for containment.</li>
+<li>Returns bool: True if this tree contains <em>subtree</em>, false otherwise.</li>
+</ul>
+</li>
+</ul>
+<h3><a name="FindAll" class="anchor" href="#FindAll">FindAll</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.FindAll<em>U</em>() : <em>U</em> list</pre>
+Finds all subtrees of type <em>U</em> within this tree. Returned subtrees are in depth-first order.
+<ul>
+<li><p>Returns <em>U</em> list: All subtrees of type <em>U</em> within this tree.</p></li>
+</ul>
+</li>
+<li>
+<pre>static FindAll<em>U</em>() : <em>T</em> -&gt; <em>U</em> list</pre>
+Finds all subtrees of type <em>U</em> within a tree. Returned subtrees are in depth-first order.
+<ul>
+<li>
+Returns <em>T</em> <tt>-&gt;</tt> <em>U</em> list: A function that takes a tree and returns all subtrees 
+of type <em>U</em> within that tree. Useful when combined with the <code>|&gt;</code> operator.
+</li>
+</ul>
+</li>
+</ul>
+<h3><a name="FindAllMatching" class="anchor" href="#FindAllMatching">FindAllMatching</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.FindAll<em>U</em> Matching< <em>pattern</em> &gt;() : <em>BindingType</em> list</pre>
+Finds all subtrees of type <em>U</em> within this tree matching <em>pattern</em>, and binds any pattern holes to
+<em>BindingType</em> members. See <a href="patterns.html">patterns, holes, and binding types</a> for more information.
+<ul>
+<li>Static parameter <em>pattern</em> (string): A pattern of form <em>U</em>.</li>
+<li>Returns <em>BindingType</em> list: All <em>BindingType</em>s corresponding to <em>U</em> matches within this tree.</li>
+</ul>
+</li>
+</ul>
+<h3><a name="TryFind" class="anchor" href="#TryFind">TryFind</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.TryFind<em>U</em>< <em>pattern</em> &gt;() : <em>BindingType</em> option</pre>
+Tries to find a subtree of type <em>U</em> within this tree matching <em>pattern</em> and, if found, binds any
+pattern holes to <em>BindingType</em> members. See <a href="patterns.html">patterns, holes, and binding types</a> for
+more information.
+<ul>
+<li>Static parameter <em>pattern</em> (string): A pattern of form <em>U</em>.</li>
+<li>
+Returns <em>BindingType</em> option: <code>Some(BindingType)</code> corresponding to the first <em>U</em> (in depth-first
+order) in this tree, or <code>None</code> if no subtrees of type <em>U</em> exist.
+</li>
+</ul>
+</li>
+</ul>
+<h3><a name="TryMatch" class="anchor" href="#TryMatch">TryMatch</a></h3>
+<ul>
+<li>
+<pre><em>T</em>.TryMatch< <em>pattern</em> &gt;() : <em>BindingType</em> option</pre>
+Tries to unify this tree with the given <em>pattern</em> and, if successful, binds any
+pattern holes to <em>BindingType</em> members. See <a href="patterns.html">patterns, holes, and binding types</a> for
+more information.
+<ul>
+<li>Static parameter <em>pattern</em> (string): A pattern of form <em>T</em>.</li>
+<li>
+Returns <em>BindingType</em> option: <code>Some(BindingType)</code> if this tree matches <em>pattern</em>, or <code>None</code> 
+if it does not.
+</li>
+</ul>
+</li>
+</ul>
+<h2><a name="Token-class-type-methods" class="anchor" href="#Token-class-type-methods">Token class type methods</a></h2>
+<p>The only method common to all token class types is <code>ToString()</code>, but some default token classes have
+special built-in methods. These methods are typically used to convert from a token class to an
+appropriate F# type.</p>
+<ul>
+<li>
+<p>The <code>ToInt()</code> method is available for the <em>Int</em>, <em>Nat</em>, and <em>NegInt</em> token classes.
+<pre>ToInt() : int</pre>
+Converts the text of this token to an integer.</p>
+</li>
+<li>
+<p>The <code>ToFloat()</code> method is available for the <em>Num</em> and <em>Dec</em> token classes.
+<pre>ToFloat() : float</pre>
+Converts the text of this token to a floating-point number.</p>
+</li>
+<li>
+<p>The <code>ToBool()</code> method is available for the <em>Bool</em> token class.
+<pre>ToBool() : bool</pre>
+Converts the text of this token (either <code>true</code> or <code>false</code>) to a boolean value.</p>
+</li>
+<li>
+<p>The <code>Unquote()</code> method is available for the <em>Stringlit</em> and <em>Charlit</em> token classes.
+<pre>Unquote() : string</pre>
+Strips the surrounding quotes from the text of a string literal token, e.g. converts <code>"abc"</code> to
+<code>abc</code>.</p>
+</li>
+<li>
+<p>The <code>Unique()</code> method is available for the <em>Id</em> token class.
+<pre>static Unique(<em>prefix</em>) : Id</pre>
+Generates a unique identifier with a given prefix. Successive calls to this method will generate
+a different identifier than any prior call in the same execution.</p>
+<ul>
+<li><p>Parameter <em>prefix</em> (string): A prefix for the generated identifier.</p></li>
+<li>Returns Id: A unique identifier.</li>
+</ul>
+</li>
+</ul>
+
+<div class="tip" id="fs1">type L = obj<br /><br />Full name: api.L</div>
+
+        </div>
+        <div class="span3">
+          <img src="/FSharp.Text.Experimental.Transform/img/logo.png" alt="F# Project" style="width:150px;margin:10px" />  
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FSharp.Text.Experimental.Transform</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://nuget.org/packages/FSharp.Text.Experimental.Transform">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform">Source Code on GitHub</a></li>
+            <li><a href="/FSharp.Text.Experimental.Transform/license.html">License</a></li>
+            <li><a href="/FSharp.Text.Experimental.Transform/release-notes.html">Release Notes</a></li>
+            
+            <li class="nav-header">Getting started</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/tutorial.html">Sample tutorial</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>

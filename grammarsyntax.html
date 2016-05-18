@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Grammar Syntax
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A library used to parse and transform structured text"/>
+    <meta name="author" content="Andrew Stevenson"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FSharp.Text.Experimental.Transform/content/style.css" />
+    <script type="text/javascript" src="/FSharp.Text.Experimental.Transform/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FSharp.Text.Experimental.Transform/index.html">FSharp.Text.Experimental.Transform</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="Grammar-Syntax" class="anchor" href="#Grammar-Syntax">Grammar Syntax</a></h1>
+<p>Like most parser-generator tools, this library uses a custom syntax to describe a context-free
+grammar which is used to parse text files. The grammar syntax is a series of statements, of which
+there are two kinds: lexer rules and parser rules (also known as productions). The lexer rules
+define how consecutive characters get tokenized, and parser rules define how the stream of tokens
+are parsed. This article covers the following syntax:</p>
+<ul>
+<li><a href="#Lexer-rules">Lexer rules</a></li>
+<li><a href="#Parser-rules">Parser rules</a></li>
+<li><a href="#Formatting-cues">Formatting cues</a></li>
+<li><a href="#Comments">Comments</a></li>
+</ul>
+<h2><a name="Lexer-rules" class="anchor" href="#Lexer-rules">Lexer rules</a></h2>
+<p>Lexer rules have the following syntax:</p>
+<p>[<code>ignore</code>] <code>terminal</code> <em>TokenClassName</em> <code>:</code> <em>QuotedRegexPattern</em> <code>;</code></p>
+<ul>
+<li>
+When present, the optional <code>ignore</code> keyword causes tokens of this token class to be 
+dropped from the token stream passed to the parser. This is typically used for comments
+and preprocessor directives.
+</li>
+<li>The <code>terminal</code> keyword is required to distinguish this lexer rule from a parser rule.</li>
+<li>
+The <em>TokenClassName</em> should be an identifier starting with a letter (uppercase by convention) 
+followed by any combination of uppercase/lowercase letters or digits.
+</li>
+<li>
+The <em>QuotedRegexPattern</em> is a double-quoted or single-quoted string literal that represents the
+regular expression for this token class. This regular expression is passed directly to the
+<a href="https://msdn.microsoft.com/en-us/library/system.text.regularexpressions.regex(v=vs.110).aspx">System.Text.RegularExpressions.Regex</a>
+class, so refer to its documentation for the appropriate regex syntax. Quote characters embedded
+in the regex string cannot be escaped, so if a double-quote (<code>"</code>) character is needed in the
+regex pattern then surround the regex with single quotes, and likewise if a single-quote (<code>'</code>) is
+needed in the regex pattern then use double quotes for the string literal.
+</li>
+</ul>
+<p>The following built-in lexer rules are available by default to be used in your parser rules. They can
+be overridden by defining a lexer rule with the same <em>TokenClassName</em>. These default rules only take
+effect in the lexer if they are referenced in your grammar, otherwise they are discarded.</p>
+<ul>
+<li>
+<p>An identifier, used for naming something like a variable, a class, a function, etc.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">terminal Id : "[a-zA-Z][a-zA-Z0-9_]*";
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A single-quoted string literal, used for a character literal or a string literal in some languages.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">terminal Charlit : "'[^'\\n]+'";
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A double-quoted string literal, used for a string literal in most languages (a comment in SmallTalk).
+Supports embedded backslash-escaped double quote characters.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">terminal Stringlit : '"([^"]|\\")*"';
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A number literal with a decimal point, used to represent floating point literals in most languages.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">terminal Dec : "-?[0-9]*.[0-9]+";
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A natural number literal, used to represent any integer greater than or equal to zero.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">terminal Nat : "[0-9]+";
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A negative integer literal, used to represent any integer less than zero.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">terminal NegInt : "-[0-9]+";
+</code></pre></td></tr></table>
+</li>
+</ul>
+<p>The order of lexer rules is significant because they are tried, in order of appearance, against the
+remaining unconsumed input characters. It is wise to try to have a set of token classes that never
+overlap (i.e. no two token classes contain the same string) so that order isn't an issue, but if this
+isn't possible then the first matching token class will win.</p>
+<h2><a name="Parser-rules" class="anchor" href="#Parser-rules">Parser rules</a></h2>
+<p>Parser rules have the following syntax:</p>
+<p><em>NonterminalName</em> <code>:</code> <em>Expression</em> <code>;</code></p>
+<ul>
+<li>
+The <em>NonterminalName</em> should be an identifier starting with a letter (uppercase by convention) 
+followed by any combination of uppercase/lowercase letters or digits.
+</li>
+<li>
+The <em>Expression</em> can be one of:
+<ul>
+<li><code>'</code> <em>literal</em> <code>'</code>, representing a case-sensitive keyword or punctuation.</li>
+<li><code>"</code> <em>literal</em> <code>"</code>, representing a case-insensitive keyword.</li>
+<li><em>NonterminalName</em>, representing a reference to a grammar nonterminal or token class.</li>
+<li><em>Expression</em> <code>|</code> <em>Expression</em> <code>|</code> ... <code>|</code> <em>Expression</em>, representing a set of alternative goals.</li>
+<li><em>Expression</em> <em>Expression</em> ... <em>Expression</em>, representing a concatenation of goals.</li>
+<li><em>Expression</em> <code>?</code>, representing an optional goal.</li>
+<li><em>Expression</em> <code>*</code>, representing zero or more repetitions of a goal.</li>
+<li><em>Expression</em> <code>+</code>, representing one or more repetitions of a goal.</li>
+<li><em>Expression</em> <code>,*</code>, representing zero or more comma-separated repetitions of a goal.</li>
+<li><em>Expression</em> <code>,+</code>, representing one or more comma-separated repetitions of a goal.</li>
+<li><code>(</code> <em>Expression</em> <code>)</code>, representing an embedded subexpression.</li>
+<li>A <a href="#Formatting-cues">formatting cue</a>. (Must be part of a concatenation)</li>
+</ul>
+</li>
+</ul>
+<p>Quoted literals that are letters only are automatically interpreted as keywords and tokenized
+separately from identifiers, so e.g. the variable <code>letterSize</code> will never be tokenized as the keyword
+<code>let</code> followed by the identifier <code>terSize</code>. It just <a href="philosophy.html#Just-do-the-right-thing">does the right thing by default</a>.
+Quoted literals do not support escape characters, so use double quotes for <code>'</code> punctuation, and use
+single quotes for <code>"</code> punctuation.</p>
+<p>When writing a disjunctive goal (a production of the form <code>A : B | C | D</code>) the order of alternatives matters.
+Each alternative will be attempted in order of appearance. If the current alternative fails, whether it has
+consumed input or not, the parser will backtrack and the next alternative will be tried. The number of tokens
+consumed by each alternative has no bearing on the parsing outcome.</p>
+<p>In general the multiplicity modifiers are greedy. The optional modifier (<code>?</code>) will try to consume the
+modified goal before accepting an empty result, and the repetition modifiers (<code>*</code>,<code>+</code>,<code>,*</code>,<code>,+</code>) will try to
+consume as many instances of the modified goal as possible.</p>
+<p>The following built-in parser rules are available by default to be used in your parser rules. They can
+be overridden by defining a parser rule with the same <em>NonterminalName</em>. These default rules only take
+effect in the parser if they are referenced in your grammar, otherwise they are discarded.</p>
+<ul>
+<li>
+<p>An integer literal, used to represent any integer.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Int : Nat | NegInt;
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A number literal, used to represent any integer or decimal number.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Num : Dec | Nat | NegInt;
+</code></pre></td></tr></table>
+</li>
+<li>
+<p>A boolean literal, used to represent the keyword <code>true</code> or <code>false</code>.</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Bool : 'true' | 'false';
+</code></pre></td></tr></table>
+</li>
+</ul>
+<p>Every grammar must have a parser rule named 'Program' which is the starting rule for the parser.
+See <a href="tutorial.html">the tutorial</a> for a detailed example of how to construct a grammar and
+apply formatting cues. The order of parser rules does not matter.</p>
+<h2><a name="Formatting-cues" class="anchor" href="#Formatting-cues">Formatting cues</a></h2>
+<p>Formatting cues can be embedded in your grammar to control how the output text is pretty-printed.
+There are 4 formatting cues, each represented by a character:</p>
+<ul>
+<li>Indent <code>&gt;</code></li>
+<li>Dedent <code>&lt;</code></li>
+<li>Space <code>_</code></li>
+<li>Newline <code>/</code></li>
+</ul>
+<p>The most common uses of indent and dedent are around lexical scoping punctuation, for example
+the following defines a Block as a pair of curly braces surrounding an indented set of statements:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Block   :   '{' &gt; Statement* &lt; '}';
+</code></pre></td></tr></table>
+<p>We recommend formatting such statements with cues to make the cue effect more apparent:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Block   :   '{' 
+        &gt;       Statement* 
+        &lt;   '}';
+</code></pre></td></tr></table>
+<p>The most common use of newline is after statements or anything that begins a new scope:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip"><code lang="text">Statement   :   'var' Id ';'            /
+            |   Id '=' Expression ';'   / ;
+</code></pre></td></tr></table>
+<p>Formatting cues are typically applied to the grammar after you see the output text and
+notice it is not formatted quite right.</p>
+<h2><a name="Comments" class="anchor" href="#Comments">Comments</a></h2>
+<p>A percent symbol (<code>%</code>) is used to signify a comment in the grammar language. Any text
+following a percent symbol (<code>%</code>) until end-of-line is considered a comment and ignored
+by the grammar language interpreter.</p>
+
+
+        </div>
+        <div class="span3">
+          <img src="/FSharp.Text.Experimental.Transform/img/logo.png" alt="F# Project" style="width:150px;margin:10px" />  
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FSharp.Text.Experimental.Transform</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://nuget.org/packages/FSharp.Text.Experimental.Transform">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform">Source Code on GitHub</a></li>
+            <li><a href="/FSharp.Text.Experimental.Transform/license.html">License</a></li>
+            <li><a href="/FSharp.Text.Experimental.Transform/release-notes.html">Release Notes</a></li>
+            
+            <li class="nav-header">Getting started</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/tutorial.html">Sample tutorial</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FSharp.Text.Experimental.Transform/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/aastevenson/FSharp.Text.Experimental.Transform"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>
