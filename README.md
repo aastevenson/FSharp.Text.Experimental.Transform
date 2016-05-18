@@ -4,7 +4,7 @@ The F# text transformation library (`FSharp.Text.Experimental.Transform`) allows
 It uses a type provider and the F# 4.0 feature of static parameters for provided methods to specify text patterns of interest to extract
 or transform.
 
-This library contains extensive [documentation](aastevenson.github.io/FSharp.Text.Experimental.Transform/), including a tutorial,
+This library contains extensive [documentation](http://aastevenson.github.io/FSharp.Text.Experimental.Transform/), including a tutorial,
 API reference, comparison with FParsec, and more.
 
 ## Supported F# Runtimes
