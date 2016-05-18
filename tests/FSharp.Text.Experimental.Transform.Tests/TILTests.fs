@@ -103,7 +103,7 @@ let ``TIL Chairmark 2.3`` () =      // declare all variables in global scope
     let program = TIL.ParseFile(INPUT_DIRECTORY + "/chairmark2.3.txt")
     let declarations = program.FindAllDeclarations() |> List.map (fun decl -> TIL.Statement.Construct<"$Declaration"> decl)
     let programWithoutDeclarations = program.ApplyRecursively removeDeclarations
-    let actual = TIL.Program(declarations @ programWithoutDeclarations.Statements).ToString()
+    let actual = TIL.Program.Construct<"$Statement*">(declarations @ programWithoutDeclarations.Statements).ToString()
 
     Assert.AreEqual(File.ReadAllText(EXPECTED_OUTPUT_DIRECTORY + "/chairmark2.3.txt"), actual)
 
