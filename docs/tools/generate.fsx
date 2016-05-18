@@ -11,7 +11,7 @@
 // (This is the original behaviour of ProjectScaffold prior to multi project support)
 let referenceBinaries = []
 // Web site location for the generated documentation
-let website = "" // empty for local testing. Replace with "/FSharp.Text.Experimental.Transform"
+let website = "/FSharp.Text.Experimental.Transform"
 
 let githubLink = "http://github.com/aastevenson/FSharp.Text.Experimental.Transform"
 
