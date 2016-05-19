@@ -1,0 +1,177 @@
+% C# grammar
+% Based on grammar from https://msdn.microsoft.com/en-us/library/aa664812(v=vs.71).aspx
+
+ignore terminal LineComment	:	"//.*?\n";
+ignore terminal BlockComment:	"/\*.*?\*/";
+ignore terminal PPDirective	:	"#.*?\n";
+
+% C.2.6 Namespaces
+Program						:	UsingDirective* GlobalAttribute* NamespaceMemberDeclaration*;
+UsingDirective				:	'using' Id '=' NamespaceOrTypeName ';'
+							|	'using' NamespaceName ';';
+NamespaceMemberDeclaration	:	NamespaceDeclaration | TypeDeclaration;
+NamespaceDeclaration		:	'namespace' QualifiedIdentifier NamespaceBody ';'? ;
+QualifiedIdentifier			:	Id ('.' Id)*;
+NamespaceBody				:	'{' UsingDirective* NamespaceMemberDeclaration* '}';
+TypeDeclaration				:	ClassDeclaration
+							|	StructDeclaration
+							|	InterfaceDeclaration
+							|	EnumDeclaration
+							|	DelegateDeclaration;
+
+% C.2.7 Classes
+ClassDeclaration			:	Attribute* ClassModifier* 'class' Id ClassBase? ClassBody ';'?;
+ClassModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private' | 'abstract' | 'sealed';
+ClassBase					:	':' ClassType
+							|	':' InterfaceType (',' InterfaceType)*
+							|	':' ClassType ',' InterfaceType (',' InterfaceType)*;
+ClassBody					:	'{' ClassMemberDeclaration* '}';
+ClassMemberDeclaration		:	ConstantDeclaration
+							|	FieldDeclaration
+							|	MethodDeclaration
+							|	PropertyDeclaration
+							|	EventDeclaration
+							|	IndexerDeclaration
+							|	OperatorDeclaration
+							|	ConstructorDeclaration
+							|	DestructorDeclaration
+							|	StaticConstructorDeclaration
+							|	TypeDeclaration;
+ConstantDeclaration			:	Attribute* ConstantModifier* 'const' Type ConstantDeclarators ';';
+ConstantModifier			:	'new' | 'public' | 'protected' | 'internal' | 'private';
+ConstantDeclarator			:	Id '=' ConstantExpression;
+FieldDeclaration			:	Attribute* FieldModifier* Type VariableDeclarators ';';
+FieldModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private' | 'static' | 'readonly' | 'volatile';
+VariableDeclarators			:	VariableDeclarator (',' VariableDeclarator)+;
+VariableDeclarator			:	Id ('=' VariableInitializer)?;
+VariableInitializer			:	Expression | ArrayInitializer;
+MethodDeclaration			:	MethodHeader MethodBody;
+MethodHeader				:	Attribute* MethodModifier* ReturnType MemberName '(' FormalParameterList? ')';
+MethodModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private' | 'static' | 'virtual'
+							|	'sealed' | 'override' | 'abstract' | 'extern';
+ReturnType					:	Type | 'void';
+MemberName					:	Id 
+							|	InterfaceType '.' Id;
+MethodBody					:	Block | ';';
+FormalParameterList			:	FixedParameters (',' ParameterArray)?
+							|	ParameterArray;
+FixedParameters				:	FixedParameter (',' FixedParameter)*;
+FixedParameter				:	Attribute* ParameterModifier? Type Id;
+ParameterModifier			:	'ref' | 'out';
+ParameterArray				:	Attribute* 'params' ArrayType Id;
+PropertyDeclaration			:	Attribute* PropertyModifier* Type MemberName '{' AccessorDeclarations '}';
+PropertyModifier			:	'new' | 'public' | 'protected' | 'internal' | 'private' | 'static'
+							|	'virtual' | 'sealed' | 'override' | 'abstract' | 'extern';
+AccessorDeclarations		:	GetAccessorDeclaration SetAccessorDeclaration?
+							|	SetAccessorDeclaration GetAccessorDeclaration?;
+GetAccessorDeclaration		:	Attribute* 'get' AccessorBody;
+SetAccessorDeclaration		:	Attribute* 'set' AccessorBody;
+AccessorBody				:	Block | ';';
+EventDeclaration			:	Attribute* EventModifier* 'event' Type (VariableDeclarators ';' | MemberName '{' EventAccessorDeclarations '}');
+EventModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private' | 'static'
+							|	'virtual' | 'sealed' | 'override' | 'abstract' | 'extern';
+EventAccessorDeclarations	:	AddAccessorDeclaration RemoveAccessorDeclaration
+							|	RemoveAccessorDeclaration AddAccessorDeclaration;
+AddAccessorDeclaration		:	Attribute* 'add' Block;
+RemoveAccessorDeclaration	:	Attribute* 'remove' Block;
+IndexerDeclaration			:	Attribute* IndexerModifier* IndexerDeclarator '{' AccessorDeclarations '}';
+IndexerModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private' | 'static'
+							|	'virtual' | 'sealed' | 'override' | 'abstract' | 'extern';
+IndexerDeclarator			:	Type (InterfaceType '.')? 'this' '[' FormalParameterList ']';
+OperatorDeclaration			:	Attribute* OperatorModifier+ OperatorDeclarator OperatorBody;
+OperatorModifier			:	'public' | 'static' | 'extern';
+OperatorDeclarator			:	UnaryOperatorDeclarator
+							|	BinaryOperatorDeclarator
+							|	ConversionOperatorDeclarator;
+UnaryOperatorDeclarator		:	Type 'operator' OverloadableUnaryOperator '(' Type Id ')';
+OverloadableUnaryOperator	:	'+' | '-' | '!' | '~' | '++' | '--' | 'true' | 'false';
+BinaryOperatorDeclarator	:	Type 'operator' OverloadableBinaryOperator '(' Type Id ',' Type Id ')';
+ConversionOperatorDeclarator:	('implicit'|'explicit') 'operator' Type '(' Type Id ')';
+OperatorBody				:	Block | ';';
+ConstructorDeclaration		:	Attribute* ConstructorModifier* ConstructorDeclarator ConstructorBody;
+ConstructorModifier			:	'public' | 'protected' | 'internal' | 'private' | 'extern';
+ConstructorDeclarator		:	Id '(' FormalParameter,* ')' ConstructorInitializer?;							
+ConstructorInitializer		:	':' 'base' '(' Argument* ')'
+							|	':' 'this' '(' Argument* ')';
+ConstructorBody				:	Block | ';';
+StaticConstructorDeclaration:	Attribute* StaticConstructorModifier Id '(' ')' StaticConstructorBody;
+StaticConstructorModifier	:	'extern'? 'static';
+							|	'static' 'extern'?;
+StaticConstructorBody		:	Block | ';';
+DestructorDeclaration		:	Attribute* 'extern'? '~' Id '(' ')' DestructorBody;
+DestructorBody				:	Block | ';';
+
+% C.2.8 Structs
+StructDeclaration			:	Attribute* StructModifier* 'struct' Id StructInterfaces? StructBody ';'?;
+StructModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private';
+StructInterfaces			:	':' InterfaceType,+ ;
+StructBody					:	'{' StructMemberDeclaration* '}';
+StructMemberDeclaration		:	ConstantDeclaration
+							|	FieldDeclaration
+							|	MethodDeclaration
+							|	PropertyDeclaration
+							|	EventDeclaration
+							|	IndexerDeclaration
+							|	OperatorDeclaration
+							|	ConstructorDeclaration
+							|	StaticConstructorDeclaration
+							|	TypeDeclaration;
+
+% C.2.9 Arrays
+ArrayType					:	NonArrayType RankSpecifier+;
+NonArrayType				:	Type;
+RankSpecifier				:	'[' ','* ']';
+ArrayInitializer			:	'{' VariableInitializer,* '}'
+							|	'{' VariableInitializer,+ ',' '}';
+VariableInitializer			:	Expression
+							|	ArrayInitializer;
+
+% C.2.10 Interfaces
+InterfaceDeclaration		:	Attribute* InterfaceModifier* 'interface' Id InterfaceBase? InterfaceBody ';'? ;
+InterfaceModifier			:	'new' | 'public' | 'protected' | 'internal' | 'private';
+InterfaceBase				:	':' InterfaceType,+ ;
+InterfaceBody				:	'{' InterfaceMemberDeclaration* '}';
+InterfaceMemberDeclaration	:	InterfaceMethodDeclaration
+							|	InterfacePropertyDeclaration
+							|	InterfaceEventDeclaration
+							|	InterfaceIndexerDeclaration;
+InterfaceMethodDeclaration	:	Attribute* 'new'? ReturnType Id '(' FormalParameter,* ')';
+InterfacePropertyDeclaration:	Attribute* 'new'? Type Id '{' InterfaceAccessors '}';
+InterfaceAccessors			:	Attribute* ('get' | 'set') ';'
+							|	Attribute* 'get' ';' Attribute* 'set' ';'
+							|	Attribute* 'set' ';' Attribute* 'get' ';' ;
+InterfaceEventDeclaration	:	Attribute* 'new'? 'event' Type Id ';';
+InterfaceIndexerDeclaration	:	Attribute* 'new'? Type 'this' '[' FormalParameter,* ']' '{' InterfaceAccessors '}';
+
+% C.2.11 Enums
+EnumDeclaration				:	Attribute* EnumModifier* 'enum' Id EnumBase? EnumBody ';'? ;
+EnumBase					:	':' IntegralType;
+EnumBody					:	'{' EnumMemberDeclaration,* '}'
+							|	'{' EnumMemberDeclaration,+ ',' '}';
+EnumModifier				:	'new' | 'public' | 'protected' | 'internal' | 'private';
+EnumMemberDeclaration		:	Attribute* Id
+							|	Attribute* Id '=' ConstantExpression;
+
+% C.2.12 Delegates
+DelegateDeclaration			:	Attribute* DelegateModifier* 'delegate' ReturnType Id '(' FormalParameter,* ')' ';';
+DelegateModifier			:	'new' | 'public' | 'protected' | 'internal' | 'private';
+
+% C.2.13 Attributes
+GlobalAttributes			:	GlobalAttributeSection*;
+GlobalAttributeSection		:	'[' GlobalAttributeTargetSpecifier Attribute,+ ']'
+							|	'[' GlobalAttributeTargetSpecifier Attribute,+ ',' ']';
+GlobalAttributeTargetSpecifier:	('assembly' | 'module') ':';
+Attributes					:	AttributeSection+;
+AttributeSection			:	'[' AttributeTargetSpecifier? Attribute,+ ']'
+							|	'[' AttributeTargetSpecifier? Attribute,+ ',' ']';
+AttributeTargetSpecifier	:	AttributeTarget ':';
+AttributeTarget				:	'field' | 'event' | 'method' | 'param' | 'property' | 'return' | 'type';
+Attribute					:	AttributeName AttributeArguments?;
+AttributeName				:	TypeName;
+AttributeArguments			:	'(' PositionalArgument,* ')'
+							|	'(' PositionalArgument,+ ',' NamedArgument,+ ')'
+							|	'(' NamedArgument,+ ')';
+PositionArgument			:	AttributeArgumentExpression;
+NamedArgument				:	Id '=' AttributeArgumentExpression;
+AttributeArgumentExpression	:	Expression;
+

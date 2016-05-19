@@ -1,0 +1,29 @@
+Program					:	Statement*;
+Statement				:	Declaration
+						|	AssignmentStatement
+						|	IfStatement
+						|	WhileStatement
+						|	ForStatement
+						|	ReadStatement
+						|	WriteStatement;
+Declaration				:	'var' Id ';' /;
+AssignmentStatement		:	Id ':=' Expression ';' /;
+IfStatement				:	'if' Expression 'then'	/
+						>		Statement*
+						<	'end' /
+						|	'if' Expression 'then'	/
+						>		Statement*
+						<	'else'					/
+						>		Statement*
+						<	'end' /;
+WhileStatement			:	'while' Expression 'do'	/
+						>		Statement*
+						<	'end' /;
+ForStatement			:	'for' Id ':=' Expression 'to' Expression 'do'	/
+						>		Statement*
+						<	'end' /;
+ReadStatement			:	'read' Id ';' /;
+WriteStatement			:	'write' Expression ';' /;
+Expression				:	Primary (Op Expression)?;
+Primary					:	Id | Int | Stringlit | '(' Expression ')' ;
+Op						:	'=' | '!=' | '+' | '-' | '*' | '/';
